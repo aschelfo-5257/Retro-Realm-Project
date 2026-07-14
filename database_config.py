@@ -2,16 +2,14 @@ import mysql.connector
 from mysql.connector import Error
 
 def get_connection():
-    """Manages the server connection baseline securely."""
+    """Establishes and returns a database connection pool pointer."""
     try:
-        connection = mysql.connector.connect(
-            host='your_remote_host',
-            database='retrorealmgames',
-            user='your_username',
-            password='your_password'
+        return mysql.connector.connect(
+            host="YOUR_REMOTE_SERVER_IP",
+            database="retrorealmgames",
+            user="YOUR_USERNAME",
+            password="YOUR_PASSWORD"
         )
-        if connection.is_connected():
-            return connection
     except Error as e:
-        print(f"Connection baseline dropped: {e}")
+        print(f"Secure database gateway link severed: {e}")
         return None
