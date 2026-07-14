@@ -1,53 +1,74 @@
-from datetime import date
-import mysql.connector
+# Program name: database_ops.py
+# Author: Aaron Schelfo
+# Date last updated: July 13, 2026
+# Purpose: Modular functions executing specialized inserts, modifications, and atomic transactions.
 
-def insert_new_game(conn, title, condition, platform_id):
-    """Option 1: Add a record to the Games table."""
-    cursor = conn.cursor()
-    query = "INSERT INTO Games (game_title, game_condition, platform_id) VALUES (%s, %s, %s)"
-    cursor.execute(query, (title, condition, platform_id))
-    conn.commit()
-    cursor.close()
-    print("✨ Game cataloged successfully!")
+from datetime import get_connection
+from mysql.connector import Error
 
-def change_game_condition(conn, game_id, new_condition):
-    """Option 2: Update a record in the Games table."""
-    cursor = conn.cursor()
-    query = "UPDATE Games SET game_condition = %s WHERE game_id = %s"
-    cursor.execute(query, (new_condition, game_id))
-    conn.commit()
-    cursor.close()
-    print("✏️ Condition matrix updated!")
+def insert_platform(name, year):
+    """Add Table Option #1: Platforms"""
+    query = "INSERT INTO Platforms (platform_name, release_year) VALUES (%s, %s);"
+    _run_modification(query, (name, year))
 
-def remove_game(conn, game_id):
-    """Option 3: Delete a record from the Games table."""
-    cursor = conn.cursor()
-    query = "DELETE FROM Games WHERE game_id = %s"
-    cursor.execute(query, (game_id,))
-    conn.commit()
-    cursor.close()
-    print("🗑️ Game removed from active inventory.")
+def insert_game(title, condition, platform_id):
+    """Add Table Option #2: Games"""
+    query = "INSERT INTO Games (game_title, game_condition, platform_id) VALUES (%s, %s, %s);"
+    _run_modification(query, (title, condition, platform_id))
 
-def process_sales_transaction(conn, store_id, game_id, price):
-    """Option 4: Multi-statement transaction sequence."""
-    today = date.today().strftime('%Y-%m-%d')
-    cursor = conn.cursor()
+def update_game_condition(game_id, status):
+    """Update Table Option #1: Games"""
+    query = "UPDATE Games SET game_condition = %s WHERE game_id = %s;"
+    _run_modification(query, (status, game_id))
+
+def update_store_phone(store_id, phone):
+    """Update Table Option #2: Stores"""
+    query = "UPDATE Stores SET phone_number = %s WHERE store_id = %s;"
+    _run_modification(query, (phone, store_id))
+
+def delete_platform(platform_id):
+    """Delete Table Option: Platforms (Requires dynamic prompt lookup value)"""
+    query = "DELETE FROM Platforms WHERE platform_id = %s;"
+    _run_modification(query, (platform_id,))
+
+def process_checkout_transaction(store_id, sale_date, total_revenue, game_id):
+    """Mandatory Multi-Statement Transaction logic protecting row parity."""
+    conn = get_connection()
+    if not conn: return
     try:
-        conn.start_transaction()
+        conn.autocommit = False  # Explicit transaction boundary context lock
+        cursor = conn.cursor()
         
-        # Action 1: Create master invoice record
-        sales_query = "INSERT INTO Sales (store_id, sale_date, total_revenue) VALUES (%s, %s, %s)"
-        cursor.execute(sales_query, (store_id, today, price))
-        invoice_id = cursor.lastrowid
+         # 1. Insert header record tracking checkout location
+        sales_sql = "INSERT INTO Sales (store_id, sale_date, total_revenue) VALUES (%s, %s, %s);"
+        cursor.execute(sales_sql, (store_id, sale_date, total_revenue))
+
+        invoice_ref = cursor.lastrowid
         
-        # Action 2: Link game entry item
+        # 2. Insert corresponding child line item records mapped to inventory
         tx_query = "INSERT INTO Transaction (game_id, sale_id) VALUES (%s, %s)"
         cursor.execute(tx_query, (game_id, invoice_id))
         
         conn.commit()
-        print(f"✅ Transaction secured! Invoice #{invoice_id} locked in.")
-    except mysql.connector.Error as error:
-        conn.rollback()
-        print(f"❌ Warning trace detected. Rolling back transaction: {error}")
+        print(f"Transaction verified! Generated Ledger Order Number: #{invoice_ref}")
+    except Error as e:
+        conn.rollback()  # Safely reverse updates if constraint fails
+        print(f"Transaction aborted automatically: {e}")
     finally:
         cursor.close()
+        conn.close()
+
+def _run_modification(query, params):
+    """Private operational helper executing isolated single statements cleanly."""
+    conn = get_connection()
+    if not conn: return
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        conn.commit()
+        print("Database reference state tracking successfully adjusted.")
+    except Error as e:
+        print(f"Operation failure: {e}")
+    finally:
+        cursor.close()
+        conn.close()
