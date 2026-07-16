@@ -1,1 +1,1 @@
-from .database_config import db_credentials
+from .database_config import get_connection
