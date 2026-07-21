@@ -5,8 +5,8 @@ Date last updated: July 13, 2026
 Purpose: Orchestrates the user menu loop and pulls data from separate project modules.
 """
 
-import database_ops as ops
-import reports as rpt
+from database import database_ops as ops
+from modules import reports as rpt
 
 def run_add_menu():
     print("\n[Add Target Choice]")
