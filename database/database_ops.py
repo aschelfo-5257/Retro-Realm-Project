@@ -1,7 +1,9 @@
+"""
 # Program name: database_ops.py
 # Author: Aaron Schelfo
 # Date last updated: July 13, 2026
 # Purpose: Modular functions executing specialized inserts, modifications, and atomic transactions.
+"""
 
 from mysql.connector import Error
 
