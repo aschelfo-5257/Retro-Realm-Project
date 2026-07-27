@@ -1,3 +1,10 @@
+"""
+Program Name: database_config.py
+Author: Aaron Schelfo
+Date last updated: July 13, 2026
+Purpose: Establishes and manages the remote MySQL database connection gateway for the Retro Realm application.
+"""
+
 import mysql.connector
 from mysql.connector import Error
 
