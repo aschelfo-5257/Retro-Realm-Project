@@ -1,7 +1,9 @@
-# Program name: reports.py
-# Author: Aaron Schelfo
-# Date last updated: July 13, 2026
-# Purpose: Analytics parsing layer retrieving record arrays crossing structural table boundaries.
+"""
+Program name: reports.py
+Author: Aaron Schelfo
+Date last updated: July 13, 2026
+Purpose: Analytics parsing layer retrieving record arrays crossing structural table boundaries.
+"""
 
 from config.database_config import get_connection
 
